@@ -273,58 +273,16 @@ endfunction
 
 
 function! s:ClearAll() abort
-    let bufferL = ['LastSession.coveragepy']
-    for b in bufferL
-        let _window = bufwinnr(b)
-        if (_window != -1)
-            silent! execute _window . 'wincmd w'
-            silent! execute 'q'
-        endif
-    endfor
+
 endfunction
 
 
 function! s:LastSession() abort
-    call s:ClearAll()
-    let winnrback = bufwinnr(expand("%"))
-    if (len(g:coveragepy_last_session) == 0)
-        call s:CoveragepyReport()
-    endif
-    let winnr = bufwinnr('LastSession.coveragepy')
-    silent! execute  winnr < 0 ? 'botright new ' . 'LastSession.coveragepy' : winnr . 'wincmd w'
-    setlocal buftype=nowrite bufhidden=wipe nobuflisted noswapfile nowrap number filetype=coveragepy
-    let session = split(g:coveragepy_last_session, '\n')
-    call append(0, session)
-    silent! execute 'resize ' . line('$')
-    silent! execute 'normal gg'
-    silent! execute 'nnoremap <silent> <buffer> q :q! <CR>'
-    nnoremap <silent><script> <buffer> <C-n>   :call <sid>Roulette(1)<CR>
-    nnoremap <silent><script> <buffer> <down>  :call <sid>Roulette(1)<CR>
-    nnoremap <silent><script> <buffer> j       :call <sid>Roulette(1)<CR>
-    nnoremap <silent><script> <buffer> <C-p>   :call <sid>Roulette(-1)<CR>
-    nnoremap <silent><script> <buffer> <up>    :call <sid>Roulette(-1)<CR>
-    nnoremap <silent><script> <buffer> k       :call <sid>Roulette(-1)<CR>
-    nnoremap <silent> <buffer> <Enter>         :call <sid>OpenBuffer()<CR>
-    call s:CoveragepySyntax()
-    exe winnrback  . 'wincmd w'
+
 endfunction
 
 
 function! s:OpenBuffer() abort
-    let raw_path = split(getline('.'), ' ')[0] . '.py'
-    " newer coverage versions use the .py extension, previously it
-    " didn't.
-    let path = split(raw_path, '.py')[0] . '.py'
-    let absolute_path = g:coveragepy_path . '/' . path
-    if filereadable(absolute_path)
-        execute 'wincmd p'
-        silent! execute ":e " . absolute_path
-        call s:HighlightMissing()
-        execute 'wincmd p'
-        call s:CoveragepySyntax()
-    else
-        call s:Echo("Could not load file: " . path)
-    endif
 endfunction
 
 
@@ -334,7 +292,7 @@ endfunction
 
 
 function! s:Completion(ArgLead, CmdLine, CursorPos) abort
-    let actions = "report\nshow\nnoshow\nsession\n"
+    let actions = "report\nshow\nnoshow\n"
     let extras  = "version\n"
     return actions . extras
 endfunction
@@ -347,19 +305,9 @@ function! s:Proxy(action, ...) abort
         call s:ToggleSigns()
     elseif (a:action == "noshow")
         call s:ClearSigns()
-    elseif (a:action == "session")
-        let winnr = bufwinnr('LastSession.coveragepy')
-        if (winnr != -1)
-                silent! execute 'wincmd b'
-                silent! execute 'q'
-            return
-        else
-            call s:LastSession()
-        endif
     elseif (a:action == "report")
         let report =  s:CoveragepyReport()
         if report == 1
-            call s:LastSession()
             call s:HighlightMissing()
         else
             call s:Echo("No .coverage was found in current or parent dirs")
